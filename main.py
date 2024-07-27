@@ -1,12 +1,13 @@
 import streamlit as st
 import gspread
-from oauth2client.service_account import ServiceAccountCredentials
+from google.oauth2 import service_account
 
 # Function to connect to Google Sheets
-def connect_to_gsheets(json_keyfile_name, sheet_name):
-    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds = ServiceAccountCredentials.from_json_keyfile_name(json_keyfile_name, scope)
-    client = gspread.authorize(creds)
+def connect_to_gsheets(sheet_name):
+    credentials = service_account.Credentials.from_service_account_info(
+        st.secrets["gcp_service_account"]
+    )
+    client = gspread.authorize(credentials)
     sheet = client.open(sheet_name).sheet1
     return sheet
 
@@ -25,11 +26,10 @@ def main():
 
     # Button to submit data
     if st.button("Submit"):
-        json_keyfile_name = "key.json"
         sheet_name = "Streamlit-trial"
         
         try:
-            sheet = connect_to_gsheets(json_keyfile_name, sheet_name)
+            sheet = connect_to_gsheets(sheet_name)
             write_to_gsheets(sheet, session_id, question, response)
             st.success("Data written to Google Sheets successfully!")
         except Exception as e:
